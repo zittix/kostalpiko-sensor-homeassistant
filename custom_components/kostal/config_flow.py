@@ -61,16 +61,6 @@ class KostalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return True
         return False
 
-    def _check_host(self, host, username, password) -> bool:
-        """Check if we can connect to the kostal inverter."""
-        try:
-            piko = PikoData(host, username, password, None)
-        except (ConnectTimeout, HTTPError):
-            self._errors[CONF_HOST] = "could_not_connect"
-            return False
-
-        return 'sn' in piko.info
-
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         errors = {}
@@ -85,11 +75,7 @@ class KostalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 username = user_input[CONF_USERNAME]
                 password = user_input[CONF_PASSWORD]
                 conditions = user_input[CONF_MONITORED_CONDITIONS]
-                can_connect = await self.hass.async_add_executor_job(
-                    self._check_host, host, username, password
-                )
-                if can_connect:
-                    return self.async_create_entry(
+                return self.async_create_entry(
                         title=name,
                         data={
                             CONF_HOST: host,
