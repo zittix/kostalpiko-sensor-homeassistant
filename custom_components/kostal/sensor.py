@@ -14,7 +14,7 @@ from homeassistant.const import (
 
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
-
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import SENSOR_TYPES, MIN_TIME_BETWEEN_UPDATES, DOMAIN
 
@@ -25,7 +25,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     """Add an Kostal piko entry."""
     # Add the needed sensors to hass
     data = PikoData(entry.data[CONF_HOST], entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD], hass)
-
+    await data.async_update()
     entities = []
 
     for sensor in entry.data[CONF_MONITORED_CONDITIONS]:
@@ -47,7 +47,6 @@ class PikoInverter(Entity):
         self._icon = SENSOR_TYPES[self.type][2]
         self.serial_number = None
         self.model = None
-        self.update()
 
     @property
     def name(self):
@@ -84,9 +83,9 @@ class PikoInverter(Entity):
             "model": self.model,
         }
 
-    def update(self):
+    async def async_update(self):
         """Update data."""
-        self.piko.update()
+        await self.piko.update()
         self.serial_number = self.piko.info['sn']
         self.model = self.piko.info['model']
         if self.type == "solar_generator_power":
@@ -115,41 +114,40 @@ class PikoData(Entity):
         self.hass = hass
         self.info = {}
         self.measurements = None
-        self.retrieve()
+        self.session = async_get_clientsession(hass)
 
-    def _retrieve_page(self, url):
-        with urllib.request.urlopen(self.host + url) as f:
-            return f.read().decode('utf-8')
-
-    def retrieve(self):
-        page = self._retrieve_page("/all.xml")
-        obj = xmltodict.parse(page)
-        self.info['model'] = obj["root"]["Device"]["@Name"]
-        self.info['sn'] = obj["root"]["Device"]["@Serial"]
-        self.measurements = {}
-        for i in obj["root"]["Device"]["Measurements"]["Measurement"]:
-            if '@Value' in i and '@Type' in i:
-                self.measurements[i["@Type"]] = float(i["@Value"])
-# <Measurement Value="241.4" Unit="V" Type="AC_Voltage"/>
-# <Measurement Value="0.876" Unit="A" Type="AC_Current"/>
-# <Measurement Value="206.7" Unit="W" Type="AC_Power"/>
-# <Measurement Value="205.8" Unit="W" Type="AC_Power_fast"/>
-# <Measurement Value="49.976" Unit="Hz" Type="AC_Frequency"/>
-# <Measurement Value="267.9" Unit="V" Type="DC_Voltage"/>
-# <Measurement Value="0.854" Unit="A" Type="DC_Current"/>
-# <Measurement Value="357.2" Unit="V" Type="LINK_Voltage"/>
-# <Measurement Unit="W" Type="GridPower"/>
-# <Measurement Unit="W" Type="GridConsumedPower"/>
-# <Measurement Unit="W" Type="GridInjectedPower"/>
-# <Measurement Unit="W" Type="OwnConsumedPower"/>
-# <Measurement Value="100.0" Unit="%" Type="Derating"/>
+    async def retrieve(self):
+        async with self.session.get(self.host + '/all.xml') as resp:
+            if resp.status != 200:
+                _LOGGER.error("Error while fetching the data from kostal: %d %s", resp.status, resp.text())
+            else:
+                obj = xmltodict.parse(resp.text())
+                self.info['model'] = obj["root"]["Device"]["@Name"]
+                self.info['sn'] = obj["root"]["Device"]["@Serial"]
+                self.measurements = {}
+                for i in obj["root"]["Device"]["Measurements"]["Measurement"]:
+                    if '@Value' in i and '@Type' in i:
+                        self.measurements[i["@Type"]] = float(i["@Value"])
+    # <Measurement Value="241.4" Unit="V" Type="AC_Voltage"/>
+    # <Measurement Value="0.876" Unit="A" Type="AC_Current"/>
+    # <Measurement Value="206.7" Unit="W" Type="AC_Power"/>
+    # <Measurement Value="205.8" Unit="W" Type="AC_Power_fast"/>
+    # <Measurement Value="49.976" Unit="Hz" Type="AC_Frequency"/>
+    # <Measurement Value="267.9" Unit="V" Type="DC_Voltage"/>
+    # <Measurement Value="0.854" Unit="A" Type="DC_Current"/>
+    # <Measurement Value="357.2" Unit="V" Type="LINK_Voltage"/>
+    # <Measurement Unit="W" Type="GridPower"/>
+    # <Measurement Unit="W" Type="GridConsumedPower"/>
+    # <Measurement Unit="W" Type="GridInjectedPower"/>
+    # <Measurement Unit="W" Type="OwnConsumedPower"/>
+    # <Measurement Value="100.0" Unit="%" Type="Derating"/>
 
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    def update(self):
+    async def async_update(self):
         """Update inverter data."""
         # pylint: disable=protected-access
-        self.retrieve()
+        await self.retrieve()
         _LOGGER.debug(self.measurements)
         _LOGGER.debug(self.info)
 
