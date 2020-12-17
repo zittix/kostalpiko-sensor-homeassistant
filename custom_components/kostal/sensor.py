@@ -20,7 +20,7 @@ from .const import SENSOR_TYPES, MIN_TIME_BETWEEN_UPDATES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=5)
+SCAN_INTERVAL = timedelta(seconds=10)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Add an Kostal piko entry."""
