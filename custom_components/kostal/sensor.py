@@ -149,9 +149,9 @@ class PikoData(Entity):
     def update(self):
         """Update inverter data."""
         # pylint: disable=protected-access
-
-        _LOGGER.debug(self.data)
-        _LOGGER.debug(self.ba_data)
+        self.retrieve()
+        _LOGGER.debug(self.measurements)
+        _LOGGER.debug(self.ifno)
 
 if __name__ == "__main__":
     import sys
