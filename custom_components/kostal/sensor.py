@@ -151,7 +151,7 @@ class PikoData(Entity):
         # pylint: disable=protected-access
         self.retrieve()
         _LOGGER.debug(self.measurements)
-        _LOGGER.debug(self.ifno)
+        _LOGGER.debug(self.info)
 
 if __name__ == "__main__":
     import sys
