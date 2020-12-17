@@ -2,8 +2,8 @@
 
 
 import logging
-import urllib.request
 import xmltodict
+from datetime import timedelta
 
 from homeassistant.const import (
     CONF_USERNAME,
@@ -20,6 +20,7 @@ from .const import SENSOR_TYPES, MIN_TIME_BETWEEN_UPDATES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+SCAN_INTERVAL = timedelta(seconds=5)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Add an Kostal piko entry."""
