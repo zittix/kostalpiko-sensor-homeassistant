@@ -2,9 +2,8 @@
 
 
 import logging
-
-from kostalpyko.kostalpyko import Piko
-
+import urllib.request
+import xmltodict
 
 from homeassistant.const import (
     CONF_USERNAME,
@@ -25,10 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, entry, async_add_entities):
     """Add an Kostal piko entry."""
     # Add the needed sensors to hass
-    piko = Piko(
-        entry.data[CONF_HOST], entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD]
-    )
-    data = PikoData(piko, hass)
+    data = PikoData(entry.data[CONF_HOST], entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD], hass)
 
     entities = []
 
@@ -91,161 +87,74 @@ class PikoInverter(Entity):
     def update(self):
         """Update data."""
         self.piko.update()
-        data = self.piko.data
-        ba_data = self.piko.ba_data
-        self.serial_number = self.piko.info[0]
-        self.model = self.piko.info[1]
-        if ba_data is not None:
-            if self.type == "solar_generator_power":
-                if len(ba_data) > 1:
-                    self._state = ba_data[5]
-                else:
-                    return "No BA sensor installed"
-            elif self.type == "consumption_phase_1":
-                if len(ba_data) > 1:
-                    self._state = ba_data[8]
-                else:
-                    return "No BA sensor installed"
-            elif self.type == "consumption_phase_2":
-                if len(ba_data) > 1:
-                    self._state = ba_data[9]
-                else:
-                    return "No BA sensor installed"
-            elif self.type == "consumption_phase_3":
-                if len(ba_data) > 1:
-                    self._state = ba_data[10]
-                else:
-                    return "No BA sensor installed"
-        if data is not None:
-            if self.type == "current_power":
-                if len(data) > 1:
-                    self._state = data[0]
-                else:
-                    return None
-            elif self.type == "total_energy":
-                if len(data) > 1:
-                    self._state = data[1]
-                else:
-                    return None
-            elif self.type == "daily_energy":
-                if len(data) > 1:
-                    self._state = data[2]
-                else:
-                    return None
-            elif self.type == "string1_voltage":
-                if len(data) > 1:
-                    self._state = data[3]
-                else:
-                    return None
-            elif self.type == "string1_current":
-                if len(data) > 1:
-                    self._state = data[5]
-            elif self.type == "string2_voltage":
-                if len(data) > 1:
-                    self._state = data[7]
-                else:
-                    return None
-            elif self.type == "string2_current":
-                if len(data) > 1:
-                    self._state = data[9]
-                else:
-                    return None
-            elif self.type == "string3_voltage":
-                if len(data) > 1:
-                    if len(data) < 15:
-                        # String 3 not installed
-                        return None
-                    else:
-                        # 3 Strings
-                        self._state = data[11]
-                else:
-                    return None
-            elif self.type == "string3_current":
-                if len(data) > 1:
-                    if len(data) < 15:
-                        # String 3 not installed
-                        return None
-                    else:
-                        # 3 Strings
-                        self._state = data[13]
-                else:
-                    return None
-            elif self.type == "l1_voltage":
-                if len(data) > 1:
-                    self._state = data[4]
-                else:
-                    return None
-            elif self.type == "l1_power":
-                if len(data) > 1:
-                    self._state = data[6]
-                else:
-                    return None
-            elif self.type == "l2_voltage":
-                if len(data) > 1:
-                    self._state = data[8]
-                else:
-                    return None
-            elif self.type == "l2_power":
-                if len(data) > 1:
-                    self._state = data[10]
-                else:
-                    return None
-            elif self.type == "l3_voltage":
-                if len(data) > 1:
-                    if len(data) < 15:
-                        # 2 Strings
-                        self._state = data[11]
-                    else:
-                        # 3 Strings
-                        self._state = data[12]
-                else:
-                    return None
-            elif self.type == "l3_power":
-                if len(data) > 1:
-                    if len(data) < 15:
-                        # 2 Strings
-                        self._state = data[12]
-                    else:
-                        # 3 Strings
-                        self._state = data[14]
-                else:
-                    return None
-            elif self.type == "status":
-                if len(data) > 1:
-                    if len(data) < 15:
-                        # 2 Strings
-                        self._state = data[13]
-                    else:
-                        # 3 Strings
-                        self._state = data[15]
-
-                else:
-                    return None
+        self.serial_number = self.piko.info['sn']
+        self.model = self.piko.info['model']
+        if self.type == "solar_generator_power":
+            if "AC_Power" in self.piko.measurements:
+                self._state = self.piko.measurements['AC_Power']
+            else:
+                return "No value available"
+        elif self.type == "ac_voltage":
+            if "AC_Voltage" in self.piko.measurements:
+                self._state = self.piko.measurements['AC_Voltage']
+            else:
+                return "No value available"
+        elif self.type == "ac_current":
+            if "AC_Current" in self.piko.measurements:
+                self._state = self.piko.measurements['AC_Current']
+            else:
+                return "No value available"
 
 
 class PikoData(Entity):
     """Representation of a Piko inverter."""
 
-    def __init__(self, piko, hass):
+    def __init__(self, host, username, password, hass):
         """Initialize the data object."""
-        self.piko = piko
+        self.host = host
         self.hass = hass
-        self.data = []
-        self.ba_data = []
-        self.info = None
-        self.info_update()
+        self.info = {}
+        self.measurements = None
+        self.retrieve()
+
+    def _retrieve_page(self, url):
+        with urllib.request.urlopen(self.host + url) as f:
+            return f.read().decode('utf-8')
+
+    def retrieve(self):
+        page = self._retrieve_page("/all.xml")
+        obj = xmltodict.parse(page)
+        self.info['model'] = obj["root"]["Device"]["@Name"]
+        self.info['sn'] = obj["root"]["Device"]["@Serial"]
+        self.measurements = {}
+        for i in obj["root"]["Device"]["Measurements"]["Measurement"]:
+            if '@Value' in i and '@Type' in i:
+                self.measurements[i["@Type"]] = float(i["@Value"])
+# <Measurement Value="241.4" Unit="V" Type="AC_Voltage"/>
+# <Measurement Value="0.876" Unit="A" Type="AC_Current"/>
+# <Measurement Value="206.7" Unit="W" Type="AC_Power"/>
+# <Measurement Value="205.8" Unit="W" Type="AC_Power_fast"/>
+# <Measurement Value="49.976" Unit="Hz" Type="AC_Frequency"/>
+# <Measurement Value="267.9" Unit="V" Type="DC_Voltage"/>
+# <Measurement Value="0.854" Unit="A" Type="DC_Current"/>
+# <Measurement Value="357.2" Unit="V" Type="LINK_Voltage"/>
+# <Measurement Unit="W" Type="GridPower"/>
+# <Measurement Unit="W" Type="GridConsumedPower"/>
+# <Measurement Unit="W" Type="GridInjectedPower"/>
+# <Measurement Unit="W" Type="OwnConsumedPower"/>
+# <Measurement Value="100.0" Unit="%" Type="Derating"/>
+
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         """Update inverter data."""
         # pylint: disable=protected-access
-        self.data = self.piko._get_raw_content()
-        self.ba_data = self.piko._get_content_of_own_consumption()
+
         _LOGGER.debug(self.data)
         _LOGGER.debug(self.ba_data)
 
-    def info_update(self):
-        """Update inverter info."""
-        # pylint: disable=protected-access
-        self.info = self.piko._get_info()
-        _LOGGER.debug(self.info)
+if __name__ == "__main__":
+    import sys
+    data = PikoData(sys.argv[1], None, None, None)
+    print(data.measurements)
+    print(data.info)
