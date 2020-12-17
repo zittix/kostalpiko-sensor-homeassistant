@@ -1,11 +1,10 @@
 """Config flow for Kostal piko integration."""
-from kostalpyko.kostalpyko import Piko
 
 # import logging
 
 import voluptuous as vol
 from requests.exceptions import HTTPError, ConnectTimeout
-
+from .sensor import PikoData
 from homeassistant import config_entries, exceptions
 import homeassistant.helpers.config_validation as cv
 
@@ -27,10 +26,7 @@ from .const import DOMAIN, DEFAULT_NAME, SENSOR_TYPES  # pylint:disable=unused-i
 SUPPORTED_SENSOR_TYPES = list(SENSOR_TYPES)
 
 DEFAULT_MONITORED_CONDITIONS = [
-    "current power",
-    "total energy",
-    "daily energy",
-    "status",
+    "Solar generator power"
 ]
 
 
@@ -67,14 +63,13 @@ class KostalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def _check_host(self, host, username, password) -> bool:
         """Check if we can connect to the kostal inverter."""
-        piko = Piko(host, username, password)
         try:
-            response = piko._get_info()
+            piko = PikoData(host, username, password, None)
         except (ConnectTimeout, HTTPError):
             self._errors[CONF_HOST] = "could_not_connect"
             return False
 
-        return True
+        return 'sn' in piko.info
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -120,10 +115,10 @@ class KostalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_NAME, default=user_input.get(CONF_NAME, DEFAULT_NAME)
                 ): str,
                 vol.Required(CONF_HOST, default=user_input[CONF_HOST]): str,
-                vol.Required(
-                    CONF_USERNAME, description={"suggested_value": "pvserver"}
+                vol.Optional(
+                    CONF_USERNAME, default=user_input[CONF_PASSWORD]
                 ): str,
-                vol.Required(CONF_PASSWORD, default=user_input[CONF_PASSWORD]): str,
+                vol.Optional(CONF_PASSWORD, default=user_input[CONF_PASSWORD]): str,
                 vol.Required(
                     CONF_MONITORED_CONDITIONS, default=default_monitored_conditions
                 ): cv.multi_select(SUPPORTED_SENSOR_TYPES),
