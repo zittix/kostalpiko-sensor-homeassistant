@@ -85,7 +85,7 @@ class PikoInverter(Entity):
 
     async def async_update(self):
         """Update data."""
-        await self.piko.update()
+        await self.piko.async_update()
         self.serial_number = self.piko.info['sn']
         self.model = self.piko.info['model']
         if self.type == "solar_generator_power":
@@ -118,10 +118,11 @@ class PikoData(Entity):
 
     async def retrieve(self):
         async with self.session.get(self.host + '/all.xml') as resp:
+            text = await resp.text()
             if resp.status != 200:
-                _LOGGER.error("Error while fetching the data from kostal: %d %s", resp.status, resp.text())
+                _LOGGER.error("Error while fetching the data from kostal: %d %s", resp.status, text)
             else:
-                obj = xmltodict.parse(resp.text())
+                obj = xmltodict.parse(text)
                 self.info['model'] = obj["root"]["Device"]["@Name"]
                 self.info['sn'] = obj["root"]["Device"]["@Serial"]
                 self.measurements = {}
