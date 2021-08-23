@@ -106,6 +106,11 @@ class PikoInverter(Entity):
                 self._state = self.piko.measurements['AC_Current']
             else:
                 return "No value available"
+        elif self.type == "total_solar_power":
+            if "Produced_Total" in self.piko.yields:
+                self._state = self.piko.yields['Produced_Total']
+            else:
+                return "No value available"
 
 
 class PikoData(Entity):
@@ -117,6 +122,7 @@ class PikoData(Entity):
         self.hass = hass
         self.info = {}
         self.measurements = None
+        self.yields = None
         self.session = async_get_clientsession(hass)
 
     async def retrieve(self):
@@ -132,20 +138,23 @@ class PikoData(Entity):
                 for i in obj["root"]["Device"]["Measurements"]["Measurement"]:
                     if '@Value' in i and '@Type' in i:
                         self.measurements[i["@Type"]] = float(i["@Value"])
-    # <Measurement Value="241.4" Unit="V" Type="AC_Voltage"/>
-    # <Measurement Value="0.876" Unit="A" Type="AC_Current"/>
-    # <Measurement Value="206.7" Unit="W" Type="AC_Power"/>
-    # <Measurement Value="205.8" Unit="W" Type="AC_Power_fast"/>
-    # <Measurement Value="49.976" Unit="Hz" Type="AC_Frequency"/>
-    # <Measurement Value="267.9" Unit="V" Type="DC_Voltage"/>
-    # <Measurement Value="0.854" Unit="A" Type="DC_Current"/>
-    # <Measurement Value="357.2" Unit="V" Type="LINK_Voltage"/>
-    # <Measurement Unit="W" Type="GridPower"/>
-    # <Measurement Unit="W" Type="GridConsumedPower"/>
-    # <Measurement Unit="W" Type="GridInjectedPower"/>
-    # <Measurement Unit="W" Type="OwnConsumedPower"/>
-    # <Measurement Value="100.0" Unit="%" Type="Derating"/>
-
+                    # <Measurement Value="241.4" Unit="V" Type="AC_Voltage"/>
+                    # <Measurement Value="0.876" Unit="A" Type="AC_Current"/>
+                    # <Measurement Value="206.7" Unit="W" Type="AC_Power"/>
+                    # <Measurement Value="205.8" Unit="W" Type="AC_Power_fast"/>
+                    # <Measurement Value="49.976" Unit="Hz" Type="AC_Frequency"/>
+                    # <Measurement Value="267.9" Unit="V" Type="DC_Voltage"/>
+                    # <Measurement Value="0.854" Unit="A" Type="DC_Current"/>
+                    # <Measurement Value="357.2" Unit="V" Type="LINK_Voltage"/>
+                    # <Measurement Unit="W" Type="GridPower"/>
+                    # <Measurement Unit="W" Type="GridConsumedPower"/>
+                    # <Measurement Unit="W" Type="GridInjectedPower"/>
+                    # <Measurement Unit="W" Type="OwnConsumedPower"/>
+                    # <Measurement Value="100.0" Unit="%" Type="Derating"/>
+                for i in obj["root"]["Device"]["Yields"]:
+                    o = obj["root"]["Device"]["Yields"][i]
+                    if '@Type' in o and '@Slot' in o:
+                        self.yields[o["@Type"] + "_" + o["@Slot"]] = float(o["YieldValue"]["@Value"])
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def async_update(self):
@@ -153,10 +162,12 @@ class PikoData(Entity):
         # pylint: disable=protected-access
         await self.retrieve()
         _LOGGER.debug(self.measurements)
+        _LOGGER.debug(self.yields)
         _LOGGER.debug(self.info)
 
 if __name__ == "__main__":
     import sys
     data = PikoData(sys.argv[1], None, None, None)
     print(data.measurements)
+    print(data.yields)
     print(data.info)

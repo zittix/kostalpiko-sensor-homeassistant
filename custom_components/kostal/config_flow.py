@@ -26,7 +26,8 @@ from .const import DOMAIN, DEFAULT_NAME, SENSOR_TYPES  # pylint:disable=unused-i
 SUPPORTED_SENSOR_TYPES = list(SENSOR_TYPES)
 
 DEFAULT_MONITORED_CONDITIONS = [
-    "solar_generator_power"
+    "solar_generator_power",
+    "total_solar_power"
 ]
 
 
@@ -63,8 +64,6 @@ class KostalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
-        errors = {}
-
         if user_input is not None:
 
             name = slugify(user_input.get(CONF_NAME, DEFAULT_NAME))

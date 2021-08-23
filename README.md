@@ -16,6 +16,7 @@ sensor:
     password: !secret kostal_password
     monitored_conditions:
       - solar_generator_power
+      - total_solar_power
       - ac_voltage
       - ac_current
 ```
