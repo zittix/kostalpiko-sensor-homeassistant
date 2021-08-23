@@ -47,6 +47,8 @@ class PikoInverter(Entity):
         self._unit_of_measurement = SENSOR_TYPES[self.type][1]
         self._icon = SENSOR_TYPES[self.type][2]
         self.serial_number = None
+        self.state_class = SENSOR_TYPES[self.type][3]
+        self.device_class = SENSOR_TYPES[self.type][4]
         self.model = None
 
     @property
