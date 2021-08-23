@@ -135,6 +135,7 @@ class PikoData(Entity):
                 self.info['model'] = obj["root"]["Device"]["@Name"]
                 self.info['sn'] = obj["root"]["Device"]["@Serial"]
                 self.measurements = {}
+                self.yields = {}
                 for i in obj["root"]["Device"]["Measurements"]["Measurement"]:
                     if '@Value' in i and '@Type' in i:
                         self.measurements[i["@Type"]] = float(i["@Value"])
