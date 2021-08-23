@@ -9,5 +9,6 @@
   "homekit": {},
   "dependencies": [],
   "codeowners": ["@zittix"],
-  "version": "1.0.1"
+  "version": "1.0.1",
+  "iot_class": "local_polling"
 }
