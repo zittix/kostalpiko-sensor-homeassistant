@@ -12,7 +12,7 @@ from homeassistant.const import (
     CONF_MONITORED_CONDITIONS,
 )
 
-from homeassistant.helpers.entity import Entity
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.util import Throttle
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -34,47 +34,26 @@ async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities(entities)
 
 
-class PikoInverter(Entity):
+class PikoInverter(SensorEntity):
     """Representation of a Piko inverter."""
 
     def __init__(self, piko_data, sensor_type, name):
         """Initialize the sensor."""
-        self._sensor = SENSOR_TYPES[sensor_type][0]
+
+        self.entity_description = SENSOR_TYPES[sensor_type]
+        self._attr_name = f"{self.name}"
+        self._attr_unique_id = f"{piko_data.host}_{self.entity_description.key}"
         self._name = name
         self.type = sensor_type
         self.piko = piko_data
         self._state = None
-        self._unit_of_measurement = SENSOR_TYPES[self.type][1]
-        self._icon = SENSOR_TYPES[self.type][2]
         self.serial_number = None
-        self.state_class = SENSOR_TYPES[self.type][3]
-        self.device_class = SENSOR_TYPES[self.type][4]
         self.model = None
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return "{} {}".format(self._name, self._sensor)
 
     @property
     def state(self):
         """Return the state of the device."""
         return self._state
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement this sensor expresses itself in."""
-        return self._unit_of_measurement
-
-    @property
-    def icon(self):
-        """Return icon."""
-        return self._icon
-
-    @property
-    def unique_id(self):
-        """Return unique id based on device serial and variable."""
-        return "{} {}".format(self.serial_number, self._sensor)
 
     @property
     def device_info(self):

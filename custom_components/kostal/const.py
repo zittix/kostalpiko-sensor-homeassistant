@@ -8,7 +8,12 @@ from homeassistant.const import (
     ENERGY_WATT_HOUR
 )
 from homeassistant.components.sensor import (
-    STATE_CLASS_MEASUREMENT
+    STATE_CLASS_MEASUREMENT,
+    DEVICE_CLASS_POWER,
+    DEVICE_CLASS_ENERGY,
+    DEVICE_CLASS_VOLTAGE,
+    DEVICE_CLASS_CURRENT,
+    SensorEntityDescription
 )
 
 DOMAIN = "kostal"
@@ -18,8 +23,36 @@ DEFAULT_NAME = "Kostal piko"
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=1)
 
 SENSOR_TYPES = {
-    "solar_generator_power": ["Solar generator power", POWER_WATT, "mdi:solar-power", STATE_CLASS_MEASUREMENT, "power"],
-    "total_solar_power": ["Total generated power", ENERGY_WATT_HOUR, "mdi:solar-power", "total_increasing", "energy"],
-    "ac_voltage": ["AC Voltage", ELECTRIC_POTENTIAL_VOLT, "mdi:current-ac", STATE_CLASS_MEASUREMENT, "voltage"],
-    "ac_current": ["AC Current", ELECTRIC_CURRENT_AMPERE, "mdi:flash", STATE_CLASS_MEASUREMENT, "current"],
+    "solar_generator_power": SensorEntityDescription(
+        key="solar_generator_power",
+        name="Solar generator power",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        icon="mdi:solar-power"
+    ),
+    "total_solar_power": SensorEntityDescription(
+        key="total_solar_power",
+        name="Total generated power",
+        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class="total_increasing",
+        icon="mdi:solar-power"
+    ),
+    "ac_voltage": SensorEntityDescription(
+        key="ac_voltage",
+        name="AC Voltage",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        state_class=STATE_CLASS_MEASUREMENT,
+        icon="mdi:current-ac"
+    ),
+    "ac_current": SensorEntityDescription(
+        key="ac_current",
+        name="AC Current",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        state_class=STATE_CLASS_MEASUREMENT,
+        icon="mdi:flash"
+    )
 }
