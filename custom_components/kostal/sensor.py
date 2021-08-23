@@ -13,6 +13,7 @@ from homeassistant.const import (
 )
 
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 

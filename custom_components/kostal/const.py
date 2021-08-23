@@ -26,7 +26,7 @@ SENSOR_TYPES = {
     "solar_generator_power": SensorEntityDescription(
         key="solar_generator_power",
         name="Solar generator power",
-        native_unit_of_measurement=POWER_WATT,
+        unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
         icon="mdi:solar-power"
@@ -34,7 +34,7 @@ SENSOR_TYPES = {
     "total_solar_power": SensorEntityDescription(
         key="total_solar_power",
         name="Total generated power",
-        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        unit_of_measurement=ENERGY_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
         state_class="total_increasing",
         icon="mdi:solar-power"
@@ -42,7 +42,7 @@ SENSOR_TYPES = {
     "ac_voltage": SensorEntityDescription(
         key="ac_voltage",
         name="AC Voltage",
-        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
         state_class=STATE_CLASS_MEASUREMENT,
         icon="mdi:current-ac"
@@ -50,7 +50,7 @@ SENSOR_TYPES = {
     "ac_current": SensorEntityDescription(
         key="ac_current",
         name="AC Current",
-        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
         state_class=STATE_CLASS_MEASUREMENT,
         icon="mdi:flash"
