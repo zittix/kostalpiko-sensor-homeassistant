@@ -1,6 +1,7 @@
 """Support for Kostal Piko inverters."""
 from datetime import timedelta
 import logging
+import datetime
 
 from kostalpyko.kostalpyko import Piko
 
@@ -22,29 +23,29 @@ MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=30)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "kostal_piko"
+DEFAULT_NAME = "kostal_dev"
 
 SENSOR_TYPES = {
-    "solar_generator_power": ["Solar generator power", "W", "mdi:solar-power"],
-    "consumption_phase_1": ["Consumption phase 1", "W", "mdi:power-socket-eu"],
-    "consumption_phase_2": ["Consumption phase 2", "W", "mdi:power-socket-eu"],
-    "consumption_phase_3": ["Consumption phase 3", "W", "mdi:power-socket-eu"],
-    "current_power": ["Current power", "W", "mdi:solar-power"],
-    "total_energy": ["Total energy", "kWh", "mdi:solar-power"],
-    "daily_energy": ["Daily energy", "kWh", "mdi:solar-power"],
-    "string1_voltage": ["String 1 voltage", "V", "mdi:current-ac"],
-    "string1_current": ["String 1 current", "A", "mdi:flash"],
-    "string2_voltage": ["String 2 voltage", "V", "mdi:current-ac"],
-    "string2_current": ["String 2 current", "A", "mdi:flash"],
-    "string3_voltage": ["String 3 voltage", "V", "mdi:current-ac"],
-    "string3_current": ["String 3 current", "A", "mdi:flash"],
-    "l1_voltage": ["L1 voltage", "V", "mdi:current-ac"],
-    "l1_power": ["L1 power", "W", "mdi:power-plug"],
-    "l2_voltage": ["L2 voltage", "V", "mdi:current-ac"],
-    "l2_power": ["L2 power", "W", "mdi:power-plug"],
-    "l3_voltage": ["L3 voltage", "V", "mdi:current-ac"],
-    "l3_power": ["L3 power", "W", "mdi:power-plug"],
-    "status": ["Status", None, "mdi:solar-power"],
+    "solar_generator_power": ["Solar generator power", "W", "mdi:solar-power", "measurement", "power"],
+    "consumption_phase_1": ["Consumption phase 1", "W", "mdi:power-socket-eu", "measurement", "power"],
+    "consumption_phase_2": ["Consumption phase 2", "W", "mdi:power-socket-eu", "measurement", "power"],
+    "consumption_phase_3": ["Consumption phase 3", "W", "mdi:power-socket-eu", "measurement", "power"],
+    "current_power": ["Current power", "W", "mdi:solar-power", "measurement", "power"],
+    "total_energy": ["Total energy", "kWh", "mdi:solar-power", "total_increasing", "energy"],
+    "daily_energy": ["Daily energy", "kWh", "mdi:solar-power", "total_increasing", "energy"],
+    "string1_voltage": ["String 1 voltage", "V", "mdi:current-ac", "measurement", "voltage"],
+    "string1_current": ["String 1 current", "A", "mdi:flash", "measurement", "current"],
+    "string2_voltage": ["String 2 voltage", "V", "mdi:current-ac", "measurement", "voltage"],
+    "string2_current": ["String 2 current", "A", "mdi:flash", "measurement", "current"],
+    "string3_voltage": ["String 3 voltage", "V", "mdi:current-ac", "measurement", "voltage"],
+    "string3_current": ["String 3 current", "A", "mdi:flash", "measurement", "current"],
+    "l1_voltage": ["L1 voltage", "V", "mdi:current-ac", "measurement", "voltage"],
+    "l1_power": ["L1 power", "W", "mdi:power-plug", "measurement", "power"],
+    "l2_voltage": ["L2 voltage", "V", "mdi:current-ac", "measurement", "voltage"],
+    "l2_power": ["L2 power", "W", "mdi:power-plug", "measurement", "power"],
+    "l3_voltage": ["L3 voltage", "V", "mdi:current-ac", "measurement", "voltage"],
+    "l3_power": ["L3 power", "W", "mdi:power-plug", "measurement", "power"],
+    "status": ["Status", None, "mdi:solar-power", None, None],
 }
 
 
@@ -78,13 +79,15 @@ class PikoInverter(Entity):
 
     def __init__(self, piko_data, sensor_type, name):
         """Initialize the sensor."""
-        self._sensor = SENSOR_TYPES[sensor_type][0]
-        self._name = name
         self.type = sensor_type
         self.piko = piko_data
         self._state = None
-        self._unit_of_measurement = SENSOR_TYPES[self.type][1]
-        self._icon = SENSOR_TYPES[self.type][2]
+        self._name = name
+        self._sensor = SENSOR_TYPES[sensor_type][0]
+        self._attr_unit_of_measurement = SENSOR_TYPES[self.type][1]
+        self._attr_icon = SENSOR_TYPES[self.type][2]
+        self._attr_device_class = SENSOR_TYPES[self.type][4]
+        self._state_attributes = {"state_class": SENSOR_TYPES[self.type][3]}
         self.update()
 
     @property
@@ -98,15 +101,10 @@ class PikoInverter(Entity):
         return self._state
 
     @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement this sensor expresses itself in."""
-        return self._unit_of_measurement
-
-    @property
-    def icon(self):
-        """Return icon."""
-        return self._icon
-
+    def state_attributes(self):
+        """Return device specific state attributes."""
+        return self._state_attributes
+        
     def update(self):
         """Update data."""
         self.piko.update()
