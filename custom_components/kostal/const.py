@@ -1,7 +1,7 @@
 """Constants for the Kostal piko integration."""
 from datetime import timedelta
 
-from homeassistant.const import UnitOfElectricCurrent, UnitsOfPower, UnitOfElectricPotential
+from homeassistant.const import UnitOfElectricCurrent, UnitOfPower, UnitOfElectricPotential, UnitOfEnergy
 
 from homeassistant.components.sensor import (
     STATE_CLASS_MEASUREMENT,
@@ -22,7 +22,7 @@ SENSOR_TYPES = {
     "solar_generator_power": SensorEntityDescription(
         key="solar_generator_power",
         name="Solar generator power",
-        unit_of_measurement=UnitsOfPower.WATT,
+        unit_of_measurement=UnitOfPower.WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
         icon="mdi:solar-power"
