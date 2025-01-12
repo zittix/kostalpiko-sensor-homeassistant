@@ -3,14 +3,8 @@ from datetime import timedelta
 
 from homeassistant.const import UnitOfElectricCurrent, UnitOfPower, UnitOfElectricPotential, UnitOfEnergy
 
-from homeassistant.components.sensor import (
-    STATE_CLASS_MEASUREMENT,
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_VOLTAGE,
-    DEVICE_CLASS_CURRENT,
-    SensorEntityDescription
-)
+from homeassistant.components.sensor.const import SensorStateClass, SensorDeviceClass
+from homeassistant.components.sensor import SensorEntityDescription
 
 DOMAIN = "kostal"
 
@@ -23,15 +17,15 @@ SENSOR_TYPES = {
         key="solar_generator_power",
         name="Solar generator power",
         unit_of_measurement=UnitOfPower.WATT,
-        device_class=DEVICE_CLASS_POWER,
-        state_class=STATE_CLASS_MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:solar-power"
     ),
     "total_solar_power": SensorEntityDescription(
         key="total_solar_power",
         name="Total generated power",
         unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=DEVICE_CLASS_ENERGY,
+        device_class=SensorDeviceClass.ENERGY,
         state_class="total_increasing",
         icon="mdi:solar-power"
     ),
@@ -39,16 +33,16 @@ SENSOR_TYPES = {
         key="ac_voltage",
         name="AC Voltage",
         unit_of_measurement=UnitOfElectricPotential.VOLT,
-        device_class=DEVICE_CLASS_VOLTAGE,
-        state_class=STATE_CLASS_MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:current-ac"
     ),
     "ac_current": SensorEntityDescription(
         key="ac_current",
         name="AC Current",
         unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        device_class=DEVICE_CLASS_CURRENT,
-        state_class=STATE_CLASS_MEASUREMENT,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:flash"
     )
 }
