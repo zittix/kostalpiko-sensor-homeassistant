@@ -35,5 +35,5 @@ CONFIG_SCHEMA = vol.Schema(
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Load the saved entities."""
-    await hass.config_entries.async_forward_entry_setups(entry, "sensor")
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
     return True
