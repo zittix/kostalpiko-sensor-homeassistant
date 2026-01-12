@@ -42,26 +42,20 @@ class PikoInverter(SensorEntity):
         """Initialize the sensor."""
 
         self.entity_description = SENSOR_TYPES[sensor_type]
-        self._attr_name = f"{self.name}"
+        self._attr_name = name
         self._attr_unique_id = f"{piko_data.host}_{self.entity_description.key}"
-        self._name = name
         self.type = sensor_type
         self.piko = piko_data
-        self._state = None
         self.serial_number = None
         self.model = None
-
-    @property
-    def state(self):
-        """Return the state of the device."""
-        return self._state
+        self._attr_available = False
 
     @property
     def device_info(self):
         """Return information about the device."""
         return {
             "identifiers": {(DOMAIN, self.serial_number)},
-            "name": self._name,
+            "name": self.name,
             "manufacturer": "Kostal",
             "model": self.model,
         }
@@ -73,23 +67,28 @@ class PikoInverter(SensorEntity):
         self.model = self.piko.info['model']
         if self.type == "solar_generator_power":
             if "AC_Power" in self.piko.measurements:
-                self._state = self.piko.measurements['AC_Power']
+                self._attr_native_value = self.piko.measurements['AC_Power']
+                self._attr_available = True
             else:
-                return "No value available"
+                self._attr_available = False
         elif self.type == "ac_voltage":
             if "AC_Voltage" in self.piko.measurements:
-                self._state = self.piko.measurements['AC_Voltage']
+                self._attr_native_value = self.piko.measurements['AC_Voltage']
+                self._attr_available = True
             else:
-                return "No value available"
+                self._attr_available = False
         elif self.type == "ac_current":
             if "AC_Current" in self.piko.measurements:
-                self._state = self.piko.measurements['AC_Current']
+                self._attr_native_value = self.piko.measurements['AC_Current']
+                self._attr_available = True
             else:
-                return "No value available"
+                self._attr_available = False
         elif self.type == "total_solar_power":
             if "Produced_Total" in self.piko.yields:
-                self._state = self.piko.yields['Produced_Total']
+                self._attr_native_value = self.piko.yields['Produced_Total']
+                self._attr_available = True
             else:
+                self._attr_available = False
                 return "No value available"
 
 
